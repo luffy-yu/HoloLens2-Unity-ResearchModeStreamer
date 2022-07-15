@@ -93,7 +93,7 @@ winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcesso
 		throw winrt::hresult(E_POINTER);
 	}
 	// initialize the frame processor with a streamer sink
-	co_await m_pVideoFrameProcessor->InitializeAsync(m_pVideoFrameStreamer);
+	co_await m_pVideoFrameProcessor->InitializeAsync(m_pVideoFrameStreamer, 2000000);
 }
 
 
@@ -167,7 +167,7 @@ void HL2Stream::InitializeResearchModeProcessing()
 	if (m_pAHATSensor)
 	{
 		auto processor = std::make_shared<ResearchModeFrameProcessor>(
-			m_pAHATSensor, camConsentGiven, &camAccessCheck, 0, m_pAHATStreamer);
+			m_pAHATSensor, camConsentGiven, &camAccessCheck, 2000000, m_pAHATStreamer);
 
 		m_pAHATProcessor = processor;
 	}
