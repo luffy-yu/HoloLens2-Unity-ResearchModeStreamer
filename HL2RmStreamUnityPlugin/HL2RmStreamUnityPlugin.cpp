@@ -55,9 +55,9 @@ void HL2Stream::StartStreaming()
 #if DBG_ENABLE_INFO_LOGGING
 	OutputDebugStringW(L"HL2Stream::StartStreaming: Starting streaming!\n");
 #endif
-	// start the AHAT processor
-	m_pAHATProcessor->Start();
-
+	// start the LT processor
+	m_pLTProcessor->Start();
+	
 	// start the Video video processor
 	m_pVideoFrameProcessor->StartAsync();
 	isStreaming = true;
@@ -65,9 +65,9 @@ void HL2Stream::StartStreaming()
 
 void HL2Stream::StopStreaming()
 {
-	if (m_pAHATProcessor && m_pAHATProcessor->isRunning)
+	if(m_pLTProcessor && m_pLTProcessor->isRunning)
 	{
-		m_pAHATProcessor->Stop();
+		m_pLTProcessor->Stop();
 	}
 	if (m_pVideoFrameStreamer && m_pVideoFrameProcessor->isRunning)
 	{
@@ -140,12 +140,19 @@ void HL2Stream::InitializeResearchModeSensors()
 	for (const auto& sensorDescriptor : m_sensorDescriptors)
 	{
 		wchar_t msgBuffer[200];
-		if (sensorDescriptor.sensorType == DEPTH_AHAT)
+		// if (sensorDescriptor.sensorType == DEPTH_AHAT)
+		// {
+		// 	winrt::check_hresult(m_pSensorDevice->GetSensor(
+		// 		sensorDescriptor.sensorType, &m_pAHATSensor));
+		// 	swprintf_s(msgBuffer, L"HL2Stream::InitializeResearchModeSensors: Sensor %ls\n",
+		// 		m_pAHATSensor->GetFriendlyName());
+		// 	OutputDebugStringW(msgBuffer);
+		// }
+		if(sensorDescriptor.sensorType == DEPTH_LONG_THROW)
 		{
-			winrt::check_hresult(m_pSensorDevice->GetSensor(
-				sensorDescriptor.sensorType, &m_pAHATSensor));
+			winrt::check_hresult(m_pSensorDevice->GetSensor(sensorDescriptor.sensorType, &m_pLTSensor));
 			swprintf_s(msgBuffer, L"HL2Stream::InitializeResearchModeSensors: Sensor %ls\n",
-				m_pAHATSensor->GetFriendlyName());
+				m_pLTSensor->GetFriendlyName());
 			OutputDebugStringW(msgBuffer);
 		}
 	}
@@ -161,15 +168,27 @@ void HL2Stream::InitializeResearchModeProcessing()
 	GetRigNodeId(guid);
 
 	// initialize the depth streamer
-	auto ahatStreamer = std::make_shared<ResearchModeFrameStreamer>(L"23941", guid, m_worldOrigin);
-	m_pAHATStreamer = ahatStreamer;
+	// auto ahatStreamer = std::make_shared<ResearchModeFrameStreamer>(L"23941", guid, m_worldOrigin);
+	// m_pAHATStreamer = ahatStreamer;
+	//
+	// if (m_pAHATSensor)
+	// {
+	// 	auto processor = std::make_shared<ResearchModeFrameProcessor>(
+	// 		m_pAHATSensor, camConsentGiven, &camAccessCheck, 2000000, m_pAHATStreamer);
+	//
+	// 	m_pAHATProcessor = processor;
+	// }
 
-	if (m_pAHATSensor)
+	// Long-Throw depth camera
+	auto ltStreamer = std::make_shared<ResearchModeFrameStreamer>(L"23947", guid, m_worldOrigin);
+	m_pLTStreamer = ltStreamer;
+	
+	if(m_pLTSensor)
 	{
 		auto processor = std::make_shared<ResearchModeFrameProcessor>(
-			m_pAHATSensor, camConsentGiven, &camAccessCheck, 2000000, m_pAHATStreamer);
+	m_pLTSensor, camConsentGiven, &camAccessCheck, 2000000, m_pLTStreamer);
 
-		m_pAHATProcessor = processor;
+		m_pLTProcessor = processor;
 	}
 }
 
@@ -190,10 +209,12 @@ void HL2Stream::DisableSensors()
 #if DBG_ENABLE_VERBOSE_LOGGING
 	OutputDebugString(L"HL2Stream::DisableSensors: Disabling sensors...\n");
 #endif // DBG_ENABLE_VERBOSE_LOGGING
-	if (m_pAHATSensor)
+
+	if(m_pLTSensor)
 	{
-		m_pAHATSensor->Release();
+		m_pLTSensor->Release();
 	}
+	
 	if (m_pLFCameraSensor)
 	{
 		m_pLFCameraSensor->Release();

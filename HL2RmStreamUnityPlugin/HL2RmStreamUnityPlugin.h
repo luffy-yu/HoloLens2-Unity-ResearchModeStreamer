@@ -45,13 +45,16 @@ namespace HL2Stream
 	winrt::Windows::Foundation::IAsyncAction m_videoFrameProcessorOperation = nullptr;
 
 	// rm sensors processing & streaming
-	IResearchModeSensor* m_pAHATSensor = nullptr;
+	// IResearchModeSensor* m_pAHATSensor = nullptr;
+	IResearchModeSensor* m_pLTSensor = nullptr;
 	IResearchModeSensor* m_pLFCameraSensor = nullptr;
 	IResearchModeSensor* m_pRFCameraSensor = nullptr;
 
-	std::shared_ptr<ResearchModeFrameProcessor> m_pAHATProcessor;
+	// std::shared_ptr<ResearchModeFrameProcessor> m_pAHATProcessor;
+	std::shared_ptr<ResearchModeFrameProcessor> m_pLTProcessor;
 	std::shared_ptr<ResearchModeFrameProcessor> m_pLFProcessor;
 	std::shared_ptr<ResearchModeFrameProcessor> m_pRFProcessor;
 
-	std::shared_ptr<ResearchModeFrameStreamer> m_pAHATStreamer = nullptr;
+	// std::shared_ptr<ResearchModeFrameStreamer> m_pAHATStreamer = nullptr;
+	std::shared_ptr<ResearchModeFrameStreamer> m_pLTStreamer = nullptr;
 }

@@ -134,9 +134,10 @@ void ResearchModeFrameStreamer::Send(
     size_t outBufferCount;
     const UINT16* pDepth = nullptr;
 
-    // invalidation value for AHAT 
-    USHORT maxValue = 4090;
-
+    // for long-throw sensor
+    const BYTE* pSigma = nullptr;
+    size_t outSigmaBufferCount = 0;
+    
     frame->GetResolution(&resolution);
     HRESULT hr = frame->QueryInterface(IID_PPV_ARGS(&pDepthFrame));
 
@@ -147,7 +148,9 @@ void ResearchModeFrameStreamer::Send(
 #endif
         return;
     }
-
+    
+    winrt::check_hresult(pDepthFrame->GetSigmaBuffer(&pSigma, &outSigmaBufferCount));
+    
     std::shared_ptr<IResearchModeSensorDepthFrame> spDepthFrame(pDepthFrame, [](IResearchModeSensorDepthFrame* sf) { sf->Release(); });
 
     int imageWidth = resolution.Width;
@@ -164,7 +167,7 @@ void ResearchModeFrameStreamer::Send(
     for (size_t i = 0; i < outBufferCount; ++i)
     {
         // use a different invalidation condition for Long Throw and AHAT 
-        const bool invalid = (pDepth[i] >= maxValue);
+        const bool invalid = (pSigma[i] & 0x80) > 0;
         UINT16 d;
         if (invalid)
         {
