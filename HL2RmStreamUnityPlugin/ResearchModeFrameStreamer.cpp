@@ -95,7 +95,7 @@ void ResearchModeFrameStreamer::OnConnectionReceived(
 
 }
 
-BYTE ConvertDepthPixel(USHORT v, BYTE bSigma, USHORT mask, USHORT maxshort, const int vmin, const int vmax)
+UINT16 ConvertDepthPixel(UINT16 v, BYTE bSigma, USHORT mask, USHORT maxshort, const int vmin, const int vmax)
 {
     if ((mask != 0) && (bSigma & mask) > 0)
     {
@@ -121,7 +121,7 @@ BYTE ConvertDepthPixel(USHORT v, BYTE bSigma, USHORT mask, USHORT maxshort, cons
         colorValue = (float)(v - vmin) / (float)(vmax - vmin);
     }
 
-    return (BYTE)(colorValue * 255);
+    return (UINT16)(colorValue * 255);
 }
 
 void ResearchModeFrameStreamer::Send(
@@ -161,10 +161,10 @@ void ResearchModeFrameStreamer::Send(
     ResearchModeSensorResolution resolution;
     IResearchModeSensorDepthFrame* pDepthFrame = nullptr;
     size_t outBufferCount;
-    //const UINT16* pDepth = nullptr;
+    const UINT16* pDepth = nullptr;
 
     // for long-throw sensor
-    //const BYTE* pSigma = nullptr;
+    const BYTE* pSigma = nullptr;
     size_t outSigmaBufferCount = 0;
     
     frame->GetResolution(&resolution);
@@ -177,117 +177,34 @@ void ResearchModeFrameStreamer::Send(
 #endif
         return;
     }
-
-    int maxClampDepth = 0;
-    USHORT maxshort = 0;
-    USHORT mask = 0;
-    const BYTE* pSigma = nullptr;
-
-    mask = 0x80;
-    maxClampDepth = 4000;
-
-    hr = pDepthFrame->GetSigmaBuffer(&pSigma, &outBufferCount);
-
-    const UINT16* pDepth = nullptr;
-    pDepthFrame->GetBuffer(&pDepth, &outBufferCount);
-
-    UINT32 textureWidth = 0, textureHeight = 0;
-    textureWidth = resolution.Width * 2;
-    textureHeight = resolution.Height;
-
-    UINT32 *texture = new UINT32[textureWidth * textureHeight];
-
-    for (UINT i = 0; i < resolution.Height; i++)
-    {
-        for (UINT j = 0; j < resolution.Width; j++)
-        {
-            UINT32 pixel = 0;
-            BYTE inputPixel = ConvertDepthPixel(
-                pDepth[resolution.Width * i + j],
-                pSigma ? pSigma[resolution.Width * i + j] : 0,
-                mask,
-                maxshort,
-                0,
-                maxClampDepth);
-
-            pixel = inputPixel | (inputPixel << 8) | (inputPixel << 16);
-
-            texture[i * textureWidth + (resolution.Width - j - 1)] = pixel;
-
-            //*((UINT32*)(mappedTexture)+((texture2D->GetRowPitch() / 4) * i + (resolution.Width - j - 1))) = pixel;
-        }
-    }
-
-    const UINT16* pAbImage = nullptr;
-    pDepthFrame->GetAbDepthBuffer(&pAbImage, &outBufferCount);
-
-    for (UINT i = 0; i < resolution.Height; i++)
-    {
-        for (UINT j = 0; j < resolution.Width; j++)
-        {
-            UINT32 pixel = 0;
-            BYTE inputPixel = ConvertDepthPixel(
-                pAbImage[resolution.Width * i + j],
-                pSigma ? pSigma[resolution.Width * i + j] : 0,
-                mask,
-                maxshort,
-                0,
-                maxClampDepth);
-
-            pixel = inputPixel | (inputPixel << 8) | (inputPixel << 16);
-
-            texture[i * textureWidth + resolution.Width + (resolution.Width - j - 1)] = pixel;
-            //*((UINT32*)(mappedTexture)+((texture2D->GetRowPitch() / 4) * i + resolution.Width + (resolution.Width - j - 1))) = pixel;
-        }
-    }
-
-    std::vector<BYTE> depthByteData;
-    depthByteData.reserve(textureWidth * textureHeight * sizeof(UINT32));
-
-    for (UINT i = 0; i < textureHeight; i++)
-    {
-        for (UINT j = 0; j < textureWidth; j++)
-        {
-            UINT32 d = texture[i * textureWidth + j];
-            depthByteData.push_back((BYTE)(d >> 24));
-            depthByteData.push_back((BYTE)(d << 8 >> 24));
-            depthByteData.push_back((BYTE)(d << 16 >> 24));
-            depthByteData.push_back((BYTE)d);
-        }
-    }
-
     
-    //winrt::check_hresult(pDepthFrame->GetSigmaBuffer(&pSigma, &outSigmaBufferCount));
-    //
-    //std::shared_ptr<IResearchModeSensorDepthFrame> spDepthFrame(pDepthFrame, [](IResearchModeSensorDepthFrame* sf) { sf->Release(); });
+    winrt::check_hresult(pDepthFrame->GetSigmaBuffer(&pSigma, &outSigmaBufferCount));
+    
+    std::shared_ptr<IResearchModeSensorDepthFrame> spDepthFrame(pDepthFrame, [](IResearchModeSensorDepthFrame* sf) { sf->Release(); });
 
-    //int imageWidth = resolution.Width;
-    //int imageHeight = resolution.Height;
-    //int pixelStride = resolution.BytesPerPixel;
+    int imageWidth = resolution.Width;
+    int imageHeight = resolution.Height;
+    int pixelStride = resolution.BytesPerPixel;
 
-    //int rowStride = imageWidth * pixelStride;
+    USHORT mask = 0x80;
+    int maxClampDepth = 4000;
+    USHORT maxshort = 0;
 
-    //hr = spDepthFrame->GetBuffer(&pDepth, &outBufferCount);
-    //std::vector<BYTE> depthByteData;
-    //depthByteData.reserve(outBufferCount * sizeof(UINT16));
+    int rowStride = imageWidth * pixelStride;
 
-    //// validate depth & append to vector
-    //for (size_t i = 0; i < outBufferCount; ++i)
-    //{
-    //    // use a different invalidation condition for Long Throw and AHAT 
-    //    const bool invalid = (pSigma[i] & 0x80) > 0;
-    //    UINT16 d;
-    //    if (invalid)
-    //    {
-    //        d = 0;
-    //    }
-    //    else
-    //    {
-    //        d = pDepth[i];
-    //    }
-    //    depthByteData.push_back((BYTE)(d >> 8));
-    //    depthByteData.push_back((BYTE)d);
-    //}
+    hr = spDepthFrame->GetBuffer(&pDepth, &outBufferCount);
+    std::vector<BYTE> depthByteData;
+    depthByteData.reserve(outBufferCount * sizeof(UINT16));
+
+    // validate depth & append to vector
+    for (size_t i = 0; i < outBufferCount; ++i)
+    {
+        // ConvertDepthPixel
+        UINT16 d = ConvertDepthPixel(pDepth[i], pSigma[i], mask, maxshort, 0, maxClampDepth);
+
+        depthByteData.push_back((BYTE)(d >> 8));
+        depthByteData.push_back((BYTE)d);
+    }
 
     if (m_writeInProgress)
     {
@@ -302,16 +219,16 @@ void ResearchModeFrameStreamer::Send(
     try
     {
         // Write header
-        INT32 bytesPerPixel = 4;
         m_writer.WriteUInt64(absoluteTimestamp);
-        m_writer.WriteInt32(textureWidth);
-        m_writer.WriteInt32(textureHeight);
-        m_writer.WriteInt32(bytesPerPixel);
-        m_writer.WriteInt32(bytesPerPixel* textureWidth);
+        m_writer.WriteInt32(imageWidth);
+        m_writer.WriteInt32(imageHeight);
+        m_writer.WriteInt32(pixelStride);
+        m_writer.WriteInt32(rowStride);
 
         WriteMatrix4x4(rig2worldTransform);
 
         m_writer.WriteBytes(depthByteData);
+
 #if DBG_ENABLE_VERBOSE_LOGGING
         OutputDebugStringW(L"ResearchModeFrameStreamer::SendFrame: Trying to store writer...\n");
 #endif
