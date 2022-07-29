@@ -5,7 +5,10 @@ using namespace winrt::Windows::Media::Capture;
 using namespace winrt::Windows::Media::Capture::Frames;
 
 //const int  VideoCameraFrameProcessor::kImageWidth = 640;
-const int  VideoCameraFrameProcessor::kImageWidth = 1920;
+//const int  VideoCameraFrameProcessor::kImageWidth = 1920; // latency too high
+const int  VideoCameraFrameProcessor::kImageWidth = 1280;
+
+const int kFrameRate = 15; // set desired fps to reduce latency
 const wchar_t  VideoCameraFrameProcessor::kSensorName[3] = L"PV";
 
 IAsyncAction VideoCameraFrameProcessor::InitializeAsync(
@@ -44,7 +47,8 @@ IAsyncAction VideoCameraFrameProcessor::InitializeAsync(
                     knownDesc.Width(), knownDesc.Height(), knownDesc.FrameRate());
                 OutputDebugStringW(msgBuffer);
 #endif
-                if ((knownDesc.Width() == kImageWidth)) // && (std::round(knownDesc.FrameRate()) == 15))
+                // if ((knownDesc.Width() == kImageWidth)) //&& (std::round(knownDesc.FrameRate()) == 15))
+                if ((knownDesc.Width() == kImageWidth) && (std::round(knownDesc.FrameRate()) == kFrameRate))
                 {
                     profile = knownProfile;
                     desc = knownDesc;
