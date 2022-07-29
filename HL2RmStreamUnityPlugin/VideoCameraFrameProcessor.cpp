@@ -4,7 +4,8 @@ using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Media::Capture;
 using namespace winrt::Windows::Media::Capture::Frames;
 
-const int  VideoCameraFrameProcessor::kImageWidth = 640;
+//const int  VideoCameraFrameProcessor::kImageWidth = 640;
+const int  VideoCameraFrameProcessor::kImageWidth = 1920;
 const wchar_t  VideoCameraFrameProcessor::kSensorName[3] = L"PV";
 
 IAsyncAction VideoCameraFrameProcessor::InitializeAsync(
