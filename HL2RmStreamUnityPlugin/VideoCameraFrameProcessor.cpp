@@ -4,9 +4,9 @@ using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Media::Capture;
 using namespace winrt::Windows::Media::Capture::Frames;
 
-//const int  VideoCameraFrameProcessor::kImageWidth = 640;
+const int  VideoCameraFrameProcessor::kImageWidth = 640;
 //const int  VideoCameraFrameProcessor::kImageWidth = 1920; // latency too high
-const int  VideoCameraFrameProcessor::kImageWidth = 1280;
+//const int  VideoCameraFrameProcessor::kImageWidth = 1280; // obvious latency
 
 const int kFrameRate = 15; // set desired fps to reduce latency
 const wchar_t  VideoCameraFrameProcessor::kSensorName[3] = L"PV";
