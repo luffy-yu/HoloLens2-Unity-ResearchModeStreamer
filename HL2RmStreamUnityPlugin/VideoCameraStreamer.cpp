@@ -113,12 +113,16 @@ void VideoCameraStreamer::Send(
     float fx = pFrame.VideoMediaFrame().CameraIntrinsics().FocalLength().x;
     float fy = pFrame.VideoMediaFrame().CameraIntrinsics().FocalLength().y;
 
+    //pFrame.VideoMediaFrame().CameraIntrinsics().UndistortedProjectionTransform();
+
     winrt::Windows::Foundation::Numerics::float4x4 PVtoWorldtransform;
     auto PVtoWorld =
         pFrame.CoordinateSystem().TryGetTransformTo(m_worldCoordSystem);
     if (PVtoWorld)
     {
         PVtoWorldtransform = PVtoWorld.Value();
+        // transfrom to Unity
+        PVtoWorldtransform = GetViewToUnityTransform(PVtoWorldtransform);
     }
     else
     {
@@ -254,4 +258,24 @@ void VideoCameraStreamer::WriteMatrix4x4(
     m_writer.WriteSingle(matrix.m42);
     m_writer.WriteSingle(matrix.m43);
     m_writer.WriteSingle(matrix.m44);
+}
+
+// refer: https://github.com/doughtmw/display-calibration-hololens/blob/aeb33abf8249d4a1dee940a58758e469928658a0/unity-sandbox/HoloLens2-Display-Calibration/Assets/Scripts/NetworkBehaviour.cs#L633
+winrt::Windows::Foundation::Numerics::float4x4 VideoCameraStreamer::GetViewToUnityTransform(_In_ winrt::Windows::Foundation::Numerics::float4x4 cameraToUnityRef)
+{
+    // No cameraViewTransform availabnle currently, using identity for HL2
+    // Inverse of identity is identity
+    winrt::Windows::Foundation::Numerics::float4x4 viewToCamera = winrt::Windows::Foundation::Numerics::float4x4::identity();
+
+    // Compute transform to relate winrt coordinate system with unity coordinate frame (viewToUnity)
+    // WinRT transfrom -> Unity transform by transpose and flip row 3
+    winrt::Windows::Foundation::Numerics::float4x4 viewToUnityWinRT = viewToCamera * cameraToUnityRef;
+    winrt::Windows::Foundation::Numerics::float4x4 viewToUnity = winrt::Windows::Foundation::Numerics::transpose(viewToUnityWinRT);
+    
+    viewToUnity.m31 *= -1.0f;
+    viewToUnity.m32 *= -1.0f;
+    viewToUnity.m33 *= -1.0f;
+    viewToUnity.m34 *= -1.0f;
+
+    return viewToUnity;
 }

@@ -25,6 +25,9 @@ private:
     void WriteMatrix4x4(
         _In_ winrt::Windows::Foundation::Numerics::float4x4 matrix);
 
+    winrt::Windows::Foundation::Numerics::float4x4 
+        GetViewToUnityTransform(_In_ winrt::Windows::Foundation::Numerics::float4x4 cameraToUnityRef);
+
     //bool m_streamingEnabled = true;
 
     TimeConverter m_converter;
