@@ -87,7 +87,7 @@ winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcesso
 
 	// the frame processor
 	m_pVideoFrameProcessor = std::make_unique<VideoCameraFrameProcessor>();
-	m_pVideoFrameStreamer = std::make_shared<VideoCameraStreamer>(m_worldOrigin, L"23940");
+	m_pVideoFrameStreamer = std::make_shared<VideoCameraStreamer>(m_worldOrigin, L"23940", m_pCamera);
 	if (!m_pVideoFrameStreamer.get())
 	{
 		throw winrt::hresult(E_POINTER);
@@ -153,6 +153,15 @@ void HL2Stream::InitializeResearchModeSensors()
 			winrt::check_hresult(m_pSensorDevice->GetSensor(sensorDescriptor.sensorType, &m_pLTSensor));
 			swprintf_s(msgBuffer, L"HL2Stream::InitializeResearchModeSensors: Sensor %ls\n",
 				m_pLTSensor->GetFriendlyName());
+			OutputDebugStringW(msgBuffer);
+		}
+		else if (sensorDescriptor.sensorType == LEFT_FRONT)
+		{
+			IResearchModeSensor* sensor = nullptr;
+			winrt::check_hresult(m_pSensorDevice->GetSensor(sensorDescriptor.sensorType, &sensor));
+			// cast the type
+			m_pCamera = (IResearchModeCameraSensor*)sensor;
+			swprintf_s(msgBuffer, L"HL2Stream::IResearchModeCameraSensor");
 			OutputDebugStringW(msgBuffer);
 		}
 	}

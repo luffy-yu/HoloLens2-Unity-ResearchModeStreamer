@@ -5,7 +5,7 @@ class VideoCameraStreamer : public IVideoFrameSink
 public:
     VideoCameraStreamer(
         const winrt::Windows::Perception::Spatial::SpatialCoordinateSystem& coordSystem,
-        std::wstring portName);
+        std::wstring portName, IResearchModeCameraSensor* lf_camera);
 
     void Send(
         winrt::Windows::Media::Capture::Frames::MediaFrameReference pFrame,
@@ -28,6 +28,8 @@ private:
     winrt::Windows::Foundation::Numerics::float4x4 
         GetViewToUnityTransform(_In_ winrt::Windows::Foundation::Numerics::float4x4 cameraToUnityRef);
 
+    winrt::Windows::Foundation::Numerics::float4x4 XMFLOAT4X4_to_float4x4(DirectX::XMFLOAT4X4 matrix);
+
     //bool m_streamingEnabled = true;
 
     TimeConverter m_converter;
@@ -37,6 +39,11 @@ private:
     winrt::Windows::Networking::Sockets::StreamSocket m_streamSocket = nullptr;
     winrt::Windows::Storage::Streams::DataWriter m_writer = nullptr;
     bool m_writeInProgress = false;
+
+    // for extrinsics matrix
+    IResearchModeCameraSensor* m_LFCamera = nullptr;
+
+    DirectX::XMFLOAT4X4 cameraViewMatrix;
 
     std::wstring m_portName;
 };

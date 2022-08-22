@@ -19,10 +19,11 @@ using namespace winrt::Windows::Storage::Streams;
 
 VideoCameraStreamer::VideoCameraStreamer(
     const SpatialCoordinateSystem& coordSystem,
-    std::wstring portName)
+    std::wstring portName, IResearchModeCameraSensor* lf_camera)
 {
     m_worldCoordSystem = coordSystem;
     m_portName = portName;
+    m_LFCamera = lf_camera;
 
     StartServer();
     // m_streamingEnabled = true;
@@ -113,16 +114,23 @@ void VideoCameraStreamer::Send(
     float fx = pFrame.VideoMediaFrame().CameraIntrinsics().FocalLength().x;
     float fy = pFrame.VideoMediaFrame().CameraIntrinsics().FocalLength().y;
 
-    //pFrame.VideoMediaFrame().CameraIntrinsics().UndistortedProjectionTransform();
+    // get extrinsic transform
+    auto extrinsicMatrix = winrt::Windows::Foundation::Numerics::float4x4::identity();
+    if (m_LFCamera)
+    {
+        m_LFCamera->GetCameraExtrinsicsMatrix(&cameraViewMatrix);
+        extrinsicMatrix = XMFLOAT4X4_to_float4x4(cameraViewMatrix);
+    }
 
     winrt::Windows::Foundation::Numerics::float4x4 PVtoWorldtransform;
+    
     auto PVtoWorld =
         pFrame.CoordinateSystem().TryGetTransformTo(m_worldCoordSystem);
     if (PVtoWorld)
     {
         PVtoWorldtransform = PVtoWorld.Value();
         // transfrom to Unity
-        PVtoWorldtransform = GetViewToUnityTransform(PVtoWorldtransform);
+        //PVtoWorldtransform = GetViewToUnityTransform(PVtoWorldtransform);
     }
     else
     {
@@ -205,6 +213,7 @@ void VideoCameraStreamer::Send(
         m_writer.WriteSingle(fy);
 
         WriteMatrix4x4(PVtoWorldtransform);
+        WriteMatrix4x4(extrinsicMatrix);
 
         m_writer.WriteBytes(imageBufferAsVector);
         m_writer.StoreAsync();
@@ -278,4 +287,30 @@ winrt::Windows::Foundation::Numerics::float4x4 VideoCameraStreamer::GetViewToUni
     viewToUnity.m34 *= -1.0f;
 
     return viewToUnity;
+}
+
+winrt::Windows::Foundation::Numerics::float4x4 VideoCameraStreamer::XMFLOAT4X4_to_float4x4(DirectX::XMFLOAT4X4 matrix)
+{
+    winrt::Windows::Foundation::Numerics::float4x4 result;
+    result.m11 = matrix._11;
+    result.m12 = matrix._12;
+    result.m13 = matrix._13;
+    result.m14 = matrix._14;
+
+    result.m21 = matrix._21;
+    result.m22 = matrix._22;
+    result.m23 = matrix._23;
+    result.m24 = matrix._24;
+
+    result.m31 = matrix._31;
+    result.m32 = matrix._32;
+    result.m33 = matrix._33;
+    result.m34 = matrix._34;
+
+    result.m41 = matrix._41;
+    result.m42 = matrix._42;
+    result.m43 = matrix._43;
+    result.m44 = matrix._44;
+
+    return result;
 }
