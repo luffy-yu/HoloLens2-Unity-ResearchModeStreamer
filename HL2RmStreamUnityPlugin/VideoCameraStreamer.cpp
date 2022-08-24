@@ -114,6 +114,9 @@ void VideoCameraStreamer::Send(
     float fx = pFrame.VideoMediaFrame().CameraIntrinsics().FocalLength().x;
     float fy = pFrame.VideoMediaFrame().CameraIntrinsics().FocalLength().y;
 
+    float px = pFrame.VideoMediaFrame().CameraIntrinsics().PrincipalPoint().x;
+    float py = pFrame.VideoMediaFrame().CameraIntrinsics().PrincipalPoint().y;
+
     // get extrinsic transform
     auto extrinsicMatrix = winrt::Windows::Foundation::Numerics::float4x4::identity();
     if (m_LFCamera)
