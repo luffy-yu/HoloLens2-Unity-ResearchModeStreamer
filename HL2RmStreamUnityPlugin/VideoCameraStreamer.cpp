@@ -22,13 +22,16 @@ using namespace winrt::Windows::Globalization;
 VideoCameraStreamer::VideoCameraStreamer(
     const SpatialCoordinateSystem& coordSystem,
     const GUID& guid,
+    const SpatialLocator& locator,
     std::wstring portName, IResearchModeCameraSensor* lf_camera)
 {
     m_worldCoordSystem = coordSystem;
     m_portName = portName;
     m_LFCamera = lf_camera;
 
-    SetLocator(guid);
+    m_locator = locator;
+
+    //SetLocator(guid);
 
     StartServer();
     // m_streamingEnabled = true;
@@ -343,6 +346,6 @@ winrt::Windows::Foundation::Numerics::float4x4 VideoCameraStreamer::XMFLOAT4X4_t
 
 void VideoCameraStreamer::SetLocator(const GUID& guid)
 {
-    //m_locator = Preview::SpatialGraphInteropPreview::CreateLocatorForNode(guid);
-    m_locator = SpatialLocator::GetDefault();
+    m_locator = Preview::SpatialGraphInteropPreview::CreateLocatorForNode(guid);
+    //m_locator = SpatialLocator::GetDefault();
 }

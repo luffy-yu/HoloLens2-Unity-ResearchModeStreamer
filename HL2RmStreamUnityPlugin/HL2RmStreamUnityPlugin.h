@@ -32,6 +32,8 @@ namespace HL2Stream
 
 	bool isStreaming = false;
 
+	winrt::Windows::Perception::Spatial::SpatialLocator m_locator{ nullptr };
+
 	winrt::Windows::Perception::Spatial::SpatialCoordinateSystem
 		m_worldOrigin{ nullptr };
 

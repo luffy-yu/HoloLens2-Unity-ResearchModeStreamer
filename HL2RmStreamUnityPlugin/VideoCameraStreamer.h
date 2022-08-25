@@ -6,6 +6,7 @@ public:
     VideoCameraStreamer(
         const winrt::Windows::Perception::Spatial::SpatialCoordinateSystem& coordSystem,
         const GUID& guid,
+        const winrt::Windows::Perception::Spatial::SpatialLocator& locator,
         std::wstring portName, IResearchModeCameraSensor* lf_camera);
 
     void Send(

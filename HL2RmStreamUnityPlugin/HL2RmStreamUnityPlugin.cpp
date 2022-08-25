@@ -24,7 +24,7 @@ void __stdcall HL2Stream::Initialize(IUnknown* coordinateSystem)
 	OutputDebugStringW(L"HL2Stream::StartStreaming: Initializing...\n");
 #endif
 
-	SpatialLocator m_locator = SpatialLocator::GetDefault();
+	m_locator = SpatialLocator::GetDefault();
 	m_worldOrigin = m_locator.CreateStationaryFrameOfReferenceAtCurrentLocation().CoordinateSystem();
 
 	InitializeResearchModeSensors();
@@ -91,7 +91,7 @@ winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcesso
 
 	// the frame processor
 	m_pVideoFrameProcessor = std::make_unique<VideoCameraFrameProcessor>();
-	m_pVideoFrameStreamer = std::make_shared<VideoCameraStreamer>(m_worldOrigin, guid, L"23940", m_pCamera);
+	m_pVideoFrameStreamer = std::make_shared<VideoCameraStreamer>(m_worldOrigin, guid, m_locator, L"23940", m_pCamera);
 	if (!m_pVideoFrameStreamer.get())
 	{
 		throw winrt::hresult(E_POINTER);
