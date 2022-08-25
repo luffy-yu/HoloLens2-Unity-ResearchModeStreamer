@@ -8,7 +8,7 @@
 
 namespace HL2Stream
 {
-	FUNCTIONS_EXPORTS_API void __stdcall Initialize();
+	FUNCTIONS_EXPORTS_API void __stdcall Initialize(IUnknown* coordinateSystem);
 
 	FUNCTIONS_EXPORTS_API void StreamingToggle();
 
@@ -34,6 +34,10 @@ namespace HL2Stream
 
 	winrt::Windows::Perception::Spatial::SpatialCoordinateSystem
 		m_worldOrigin{ nullptr };
+
+	// unity coordinate system, passed from unity
+	winrt::Windows::Perception::Spatial::SpatialCoordinateSystem
+		unitySpatialCoordinateSystem { nullptr };
 
 	IResearchModeSensorDevice* m_pSensorDevice;
 	IResearchModeSensorDeviceConsent* m_pSensorDeviceConsent;

@@ -5,6 +5,7 @@ class VideoCameraStreamer : public IVideoFrameSink
 public:
     VideoCameraStreamer(
         const winrt::Windows::Perception::Spatial::SpatialCoordinateSystem& coordSystem,
+        const GUID& guid,
         std::wstring portName, IResearchModeCameraSensor* lf_camera);
 
     void Send(
@@ -46,4 +47,9 @@ private:
     DirectX::XMFLOAT4X4 cameraViewMatrix;
 
     std::wstring m_portName;
+
+    // spatial locators
+   
+    winrt::Windows::Perception::Spatial::SpatialLocator m_locator = nullptr;
+    void SetLocator(const GUID& guid);
 };

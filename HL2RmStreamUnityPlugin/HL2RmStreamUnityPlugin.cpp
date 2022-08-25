@@ -15,9 +15,10 @@ static ResearchModeSensorConsent imuAccessCheck;
 static HANDLE imuConsentGiven;
 
 using namespace winrt::Windows::Perception::Spatial;
+using Microsoft::WRL::ComPtr;
 
 
-void __stdcall HL2Stream::Initialize()
+void __stdcall HL2Stream::Initialize(IUnknown* coordinateSystem)
 {
 #if DBG_ENABLE_INFO_LOGGING
 	OutputDebugStringW(L"HL2Stream::StartStreaming: Initializing...\n");
@@ -85,9 +86,12 @@ winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcesso
 		return;
 	}
 
+	GUID guid;
+	GetRigNodeId(guid);
+
 	// the frame processor
 	m_pVideoFrameProcessor = std::make_unique<VideoCameraFrameProcessor>();
-	m_pVideoFrameStreamer = std::make_shared<VideoCameraStreamer>(m_worldOrigin, L"23940", m_pCamera);
+	m_pVideoFrameStreamer = std::make_shared<VideoCameraStreamer>(m_worldOrigin, guid, L"23940", m_pCamera);
 	if (!m_pVideoFrameStreamer.get())
 	{
 		throw winrt::hresult(E_POINTER);

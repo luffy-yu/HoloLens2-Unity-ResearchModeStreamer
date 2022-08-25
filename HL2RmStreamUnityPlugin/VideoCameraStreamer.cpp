@@ -8,9 +8,11 @@ using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Media::Capture;
 using namespace winrt::Windows::Media::Capture::Frames;
 using namespace winrt::Windows::Graphics::Imaging;
+using namespace winrt::Windows::Perception;
 using namespace winrt::Windows::Perception::Spatial;
 using namespace winrt::Windows::Networking::Sockets;
 using namespace winrt::Windows::Storage::Streams;
+using namespace winrt::Windows::Globalization;
 
 //const int VideoCameraStreamer::kImageWidth = 640;
 //const wchar_t VideoCameraStreamer::kSensorName[3] = L"PV";
@@ -19,11 +21,14 @@ using namespace winrt::Windows::Storage::Streams;
 
 VideoCameraStreamer::VideoCameraStreamer(
     const SpatialCoordinateSystem& coordSystem,
+    const GUID& guid,
     std::wstring portName, IResearchModeCameraSensor* lf_camera)
 {
     m_worldCoordSystem = coordSystem;
     m_portName = portName;
     m_LFCamera = lf_camera;
+
+    SetLocator(guid);
 
     StartServer();
     // m_streamingEnabled = true;
@@ -118,12 +123,29 @@ void VideoCameraStreamer::Send(
     float py = pFrame.VideoMediaFrame().CameraIntrinsics().PrincipalPoint().y;
 
     // get extrinsic transform
-    auto extrinsicMatrix = winrt::Windows::Foundation::Numerics::float4x4::identity();
+    winrt::Windows::Foundation::Numerics::float4x4 extrinsicMatrix = winrt::Windows::Foundation::Numerics::float4x4::identity();
     if (m_LFCamera)
     {
         m_LFCamera->GetCameraExtrinsicsMatrix(&cameraViewMatrix);
-        extrinsicMatrix = XMFLOAT4X4_to_float4x4(cameraViewMatrix);
+        //extrinsicMatrix = XMFLOAT4X4_to_float4x4(cameraViewMatrix);
+        extrinsicMatrix = winrt::Windows::Foundation::Numerics::float4x4(
+            cameraViewMatrix.m[0][0], cameraViewMatrix.m[1][0], cameraViewMatrix.m[2][0], cameraViewMatrix.m[3][0],
+            cameraViewMatrix.m[0][1], cameraViewMatrix.m[1][1], cameraViewMatrix.m[2][1], cameraViewMatrix.m[3][1],
+            cameraViewMatrix.m[0][2], cameraViewMatrix.m[1][2], cameraViewMatrix.m[2][2], cameraViewMatrix.m[3][2],
+            cameraViewMatrix.m[0][3], cameraViewMatrix.m[1][3], cameraViewMatrix.m[2][3], cameraViewMatrix.m[3][3]);
     }
+
+    // grab the frame info
+    auto timestamp = PerceptionTimestampHelper::FromSystemRelativeTargetTime(HundredsOfNanoseconds(pFrame.SystemRelativeTime().Value().count()));
+    auto location = m_locator.TryLocateAtTimestamp(timestamp, m_worldCoordSystem);
+    if (!location)
+    {
+#if DBG_ENABLE_VERBOSE_LOGGING
+        OutputDebugStringW(L"VideoCameraStreamer:: Can't locate camera.\n");
+#endif
+        return;
+    }
+    const winrt::Windows::Foundation::Numerics::float4x4 rig2worldTransform = make_float4x4_from_quaternion(location.Orientation()) * make_float4x4_translation(location.Position());
 
     winrt::Windows::Foundation::Numerics::float4x4 PVtoWorldtransform;
     
@@ -132,8 +154,6 @@ void VideoCameraStreamer::Send(
     if (PVtoWorld)
     {
         PVtoWorldtransform = PVtoWorld.Value();
-        // transfrom to Unity
-        //PVtoWorldtransform = GetViewToUnityTransform(PVtoWorldtransform);
     }
     else
     {
@@ -214,8 +234,11 @@ void VideoCameraStreamer::Send(
         m_writer.WriteInt32(imageWidth * (pixelStride - 1)); // adapted row stride
         m_writer.WriteSingle(fx);
         m_writer.WriteSingle(fy);
+        m_writer.WriteSingle(px);
+        m_writer.WriteSingle(py);
 
         WriteMatrix4x4(PVtoWorldtransform);
+        WriteMatrix4x4(rig2worldTransform);
         WriteMatrix4x4(extrinsicMatrix);
 
         m_writer.WriteBytes(imageBufferAsVector);
@@ -316,4 +339,10 @@ winrt::Windows::Foundation::Numerics::float4x4 VideoCameraStreamer::XMFLOAT4X4_t
     result.m44 = matrix._44;
 
     return result;
+}
+
+void VideoCameraStreamer::SetLocator(const GUID& guid)
+{
+    //m_locator = Preview::SpatialGraphInteropPreview::CreateLocatorForNode(guid);
+    m_locator = SpatialLocator::GetDefault();
 }
