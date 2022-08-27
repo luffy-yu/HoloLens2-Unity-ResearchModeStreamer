@@ -19,7 +19,7 @@ namespace HL2Stream
 	void InitializeResearchModeSensors();
 
 	winrt::Windows::Foundation::IAsyncAction
-		InitializeVideoFrameProcessorAsync();
+		InitializeVideoFrameProcessorAsync(winrt::Windows::Perception::Spatial::SpatialLocator *locator);
 
 	void DisableSensors();
 
@@ -58,7 +58,6 @@ namespace HL2Stream
 	
 	// camera sensor
 	IResearchModeCameraSensor* m_pCamera = nullptr;
-
 
 	// std::shared_ptr<ResearchModeFrameProcessor> m_pAHATProcessor;
 	std::shared_ptr<ResearchModeFrameProcessor> m_pLTProcessor;

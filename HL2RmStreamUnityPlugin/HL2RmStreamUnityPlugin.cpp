@@ -29,7 +29,7 @@ void __stdcall HL2Stream::Initialize(IUnknown* coordinateSystem)
 
 	InitializeResearchModeSensors();
 	InitializeResearchModeProcessing();
-	auto processOp{ InitializeVideoFrameProcessorAsync() };
+	auto processOp{ InitializeVideoFrameProcessorAsync(&m_locator) };
 	processOp.get();
 
 #if DBG_ENABLE_INFO_LOGGING
@@ -78,7 +78,7 @@ void HL2Stream::StopStreaming()
 }
 
 
-winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcessorAsync()
+winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcessorAsync(winrt::Windows::Perception::Spatial::SpatialLocator* locator)
 {
 	if (m_videoFrameProcessorOperation &&
 		m_videoFrameProcessorOperation.Status() == winrt::Windows::Foundation::AsyncStatus::Completed)
@@ -86,12 +86,9 @@ winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcesso
 		return;
 	}
 
-	GUID guid;
-	GetRigNodeId(guid);
-
 	// the frame processor
 	m_pVideoFrameProcessor = std::make_unique<VideoCameraFrameProcessor>();
-	m_pVideoFrameStreamer = std::make_shared<VideoCameraStreamer>(m_worldOrigin, guid, m_locator, L"23940", m_pCamera);
+	m_pVideoFrameStreamer = std::make_shared<VideoCameraStreamer>(m_worldOrigin, locator, L"23940", m_pCamera);
 	if (!m_pVideoFrameStreamer.get())
 	{
 		throw winrt::hresult(E_POINTER);
